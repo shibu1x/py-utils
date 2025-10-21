@@ -1,0 +1,11 @@
+# Ignore everything by default
+*
+
+# Allow Python files
+!**/*.py
+
+# Allow requirements.txt
+!requirements.txt
+
+# Allow .gitkeep files
+!**/.gitkeep

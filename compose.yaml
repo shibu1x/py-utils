@@ -1,0 +1,16 @@
+services:
+  py-utils:
+    # docker compose run --rm py-utils /bin/bash
+    image: cr.quud.net/py-utils
+    tty: true
+    environment:
+      - DB_HOST
+      - DB_USER
+      - DB_PASSWORD
+      - DB_NAME
+      - S3_BUCKET
+      - S3_PREFIX
+    volumes:
+      # - .:/app:delegated
+      - ~/.aws:/root/.aws:delegated
+      - ./import_csv_to_mysql/csv_dat:./import_csv_to_mysql/csv_data:delegated
