@@ -1,10 +1,19 @@
 # py-utils
 
-Python utilities for MySQL database operations and AWS S3 integration.
+Python utilities for file processing, MySQL database operations, and AWS S3 integration.
 
 ## Features
 
-### 1. CSV to MySQL Importer (`import_csv_to_mysql`)
+### 1. ZIP to CBZ Converter (`zip_to_cbz`)
+
+Convert ZIP archives to CBZ (comic book) format with sequential image numbering.
+
+- Extracts images from ZIP files
+- Renames images to sequential 3-digit numbers (001.jpg, 002.jpg, etc.)
+- Supports multiple image formats (jpg, png, gif, bmp, webp)
+- Automatic cleanup of temporary files
+
+### 2. CSV to MySQL Importer (`import_csv_to_mysql`)
 
 Import credit card transaction CSV files into MySQL database.
 
@@ -13,7 +22,7 @@ Import credit card transaction CSV files into MySQL database.
 - Text normalization (NFKC)
 - Supports multiple credit card services (vpass, enavi)
 
-### 2. MySQL Backup to S3 (`mysql_backup_to_s3`)
+### 3. MySQL Backup to S3 (`mysql_backup_to_s3`)
 
 Automated MySQL database backup with S3 storage.
 
@@ -25,8 +34,8 @@ Automated MySQL database backup with S3 storage.
 ## Prerequisites
 
 - Docker and Docker Compose
-- AWS credentials configured (for S3 backup)
-- MySQL database
+- AWS credentials configured (for mysql_backup_to_s3 only)
+- MySQL database (for import_csv_to_mysql and mysql_backup_to_s3 only)
 
 ## Setup
 
@@ -54,22 +63,35 @@ docker compose build
 
 ## Usage
 
+### ZIP to CBZ Conversion
+
+1. Place your ZIP files in `zip_to_cbz/data/src/`
+2. Run the conversion script:
+```bash
+docker compose run --rm py-utils zip_to_cbz/main.py
+```
+3. Converted CBZ files will be in `zip_to_cbz/data/dest/`
+
 ### CSV Import
 
 1. Place your CSV files in `import_csv_to_mysql/csv_data/`
 2. Run the import script:
 ```bash
-docker compose run --rm py-utils python import_csv_to_mysql/main.py
+docker compose run --rm py-utils import_csv_to_mysql/main.py
 ```
 
 ### MySQL Backup
 
 Run the backup script:
 ```bash
-docker compose run --rm py-utils python mysql_backup_to_s3/main.py
+docker compose run --rm py-utils mysql_backup_to_s3/main.py
 ```
 
 The backup will be uploaded to S3 with the format: `{S3_PREFIX}/{database_name}.sql.gz`
+
+### Note on Docker Commands
+
+The Docker image uses an entrypoint script that automatically passes arguments to Python. You can run scripts without explicitly specifying `python`.
 
 ## Environment Variables
 
@@ -104,7 +126,7 @@ mysql -u root -p your_database < import_csv_to_mysql/output_table.sql
 ### Run Interactive Shell
 
 ```bash
-docker compose run --rm py-utils /bin/bash
+docker compose run --rm py-utils
 ```
 
 ### Build with Taskfile
@@ -120,9 +142,11 @@ task arm
 
 ## Security Notes
 
-- Never commit `.env` file or CSV data files
+- Never commit `.env` file or data files (CSV, ZIP, CBZ)
 - `.env` contains sensitive database credentials
 - CSV files may contain personal financial information
+- ZIP/CBZ files may contain copyrighted content
+- All sensitive data files are excluded in `.gitignore`
 - Use `.env.example` as a template for new environments
 
 ## License

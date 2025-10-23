@@ -7,5 +7,8 @@
 # Allow requirements.txt
 !requirements.txt
 
+# Allow entrypoint.sh
+!entrypoint.sh
+
 # Allow .gitkeep files
 !**/.gitkeep
