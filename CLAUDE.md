@@ -4,12 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Python utilities collection for MySQL database operations and AWS S3 integration. Two main utilities:
+Python utilities collection for file processing, MySQL database operations, and AWS S3 integration. Three main utilities:
 
-1. **import_csv_to_mysql**: Imports credit card transaction CSV files (Shift-JIS encoded) into MySQL `credit_histories` table
-2. **mysql_backup_to_s3**: Creates MySQL database backups, compresses them, and uploads to AWS S3
+1. **zip_to_cbz**: Converts ZIP archives to CBZ (comic book) format with sequential image numbering
+2. **import_csv_to_mysql**: Imports credit card transaction CSV files (Shift-JIS encoded) into MySQL `credit_histories` table
+3. **mysql_backup_to_s3**: Creates MySQL database backups, compresses them, and uploads to AWS S3
 
 ## Architecture
+
+### Docker Entrypoint
+
+The Docker image uses `entrypoint.sh` to handle execution:
+- Arguments are passed directly to `python` (e.g., `docker compose run --rm py-utils import_csv_to_mysql/main.py`)
+- No arguments starts an interactive bash shell
+- The current directory (`.`) is mounted at `/app` in the container for development
+
+### ZIP to CBZ Conversion Flow
+
+1. Reads ZIP files from `zip_to_cbz/data/src/`
+2. Extracts to temporary directory (`zip_to_cbz/data/temp/`)
+3. Finds all images and renames to sequential 3-digit numbers (001.jpg, 002.jpg, etc.)
+4. Creates CBZ file (ZIP with .cbz extension) in `zip_to_cbz/data/dest/`
+5. Uses the extracted directory name as the CBZ filename
+6. Cleans up temp directory completely after processing
+
+**Important**: The temp directory is deleted at the start and end of processing to ensure clean state.
 
 ### Database Schema
 
@@ -50,14 +69,19 @@ task arm
 
 ```bash
 # Start interactive shell
-docker compose run --rm py-utils /bin/bash
+docker compose run --rm py-utils
+
+# Run ZIP to CBZ converter
+docker compose run --rm py-utils zip_to_cbz/main.py
 
 # Run CSV import
-docker compose run --rm py-utils python import_csv_to_mysql/main.py
+docker compose run --rm py-utils import_csv_to_mysql/main.py
 
 # Run MySQL backup
-docker compose run --rm py-utils python mysql_backup_to_s3/main.py
+docker compose run --rm py-utils mysql_backup_to_s3/main.py
 ```
+
+Note: The entrypoint automatically passes arguments to `python`, so you don't need to specify `python` explicitly.
 
 ### Environment Configuration
 
@@ -86,10 +110,19 @@ AWS credentials are mounted from `~/.aws` directory in Docker Compose.
 
 - `.env` file contains sensitive credentials and must never be committed
 - CSV files in `import_csv_to_mysql/csv_data/` may contain personal financial data
-- Both are excluded in `.gitignore`
+- ZIP/CBZ files in `zip_to_cbz/data/` may contain copyrighted content
+- All sensitive data files are excluded in `.gitignore`
 - Use `.env.example` as template for new environments
 
 ## Key Implementation Details
+
+### ZIP to CBZ Conversion
+
+- Supported image formats: jpg, jpeg, png, gif, bmp, webp
+- Numbering format: 3-digit zero-padded (001, 002, 003, etc.)
+- CBZ naming: Uses the name of the directory inside the ZIP file
+- Temp directory lifecycle: Deleted before processing starts and after all files are processed
+- Output: CBZ files are standard ZIP archives with .cbz extension
 
 ### CSV Import
 

@@ -11,6 +11,6 @@ services:
       - S3_BUCKET
       - S3_PREFIX
     volumes:
-      # - .:/app:delegated
+      - .:/app:delegated
       - ~/.aws:/root/.aws:delegated
-      - ./import_csv_to_mysql/csv_dat:./import_csv_to_mysql/csv_data:delegated
+      # - ./import_csv_to_mysql/csv_dat:./import_csv_to_mysql/csv_data:delegated
