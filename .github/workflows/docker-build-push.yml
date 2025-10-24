@@ -55,5 +55,3 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           delete-untagged: true
-        env:
-          GHCR_TOKEN: ${{ secrets.GHCR_PAT }}
