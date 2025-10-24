@@ -1,7 +1,7 @@
 services:
-  py-utils:
-    # docker compose run --rm py-utils /bin/bash
-    image: cr.quud.net/py-utils
+  dev:
+    # docker compose run --rm dev /bin/bash
+    image: ${REGISTRY}/py-utils:dev
     tty: true
     environment:
       - DB_HOST
