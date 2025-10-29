@@ -132,7 +132,6 @@ class MySQLBackupToS3:
                 str(file_path),
                 self.s3_bucket,
                 s3_key,
-                ExtraArgs={"StorageClass": "STANDARD_IA"},
             )
             s3_uri = f"s3://{self.s3_bucket}/{s3_key}"
             print(f"Upload completed: {s3_uri}")
