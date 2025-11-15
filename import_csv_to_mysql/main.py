@@ -51,25 +51,44 @@ def parse_csv_row(row: list, card_number: str, service: str) -> Optional[dict]:
     except ValueError:
         return None
 
-    store = row[1].strip() if len(row) > 1 else ""
+    # Handle rows with extra commas in store name
+    # Expected format: date, store, price, payment_count, installment_count, payment_amount, [note]
+    # If row has more than 7 fields, merge fields from index 1 to len(row)-5 as store name
+    if len(row) > 7:
+        # Merge store name fields (combine all fields between date and last 5 fields)
+        store = ', '.join([row[i].strip() for i in range(1, len(row) - 5)])
+        # Adjust indices for remaining fields
+        price_idx = len(row) - 5
+        payment_count_idx = len(row) - 4
+        installment_count_idx = len(row) - 3
+        payment_amount_idx = len(row) - 2
+        note_idx = len(row) - 1
+    else:
+        store = row[1].strip() if len(row) > 1 else ""
+        price_idx = 2
+        payment_count_idx = 3
+        installment_count_idx = 4
+        payment_amount_idx = 5
+        note_idx = 6
+
     # Normalize store name (NFKC: convert full-width alphanumeric/symbols to half-width)
     store = unicodedata.normalize('NFKC', store)
 
     # Parse price (remove commas)
     try:
-        price = int(row[2].replace(',', '').strip()) if len(row) > 2 and row[2].strip() else 0
+        price = int(row[price_idx].replace(',', '').strip()) if len(row) > price_idx and row[price_idx].strip() else 0
     except ValueError:
         price = 0
 
     # Calculate payment from installment info
-    # row[3]: payment count, row[4]: installment count, row[5]: payment amount
+    # row[payment_count_idx]: payment count, row[installment_count_idx]: installment count, row[payment_amount_idx]: payment amount
     try:
-        payment = int(row[5].replace(',', '').strip()) if len(row) > 5 and row[5].strip() else price
+        payment = int(row[payment_amount_idx].replace(',', '').strip()) if len(row) > payment_amount_idx and row[payment_amount_idx].strip() else price
     except ValueError:
         payment = price
 
-    # Note (if row[6] exists)
-    note = row[6].strip() if len(row) > 6 and row[6].strip() else None
+    # Note (if exists)
+    note = row[note_idx].strip() if len(row) > note_idx and row[note_idx].strip() else None
     # Normalize note (NFKC: convert full-width alphanumeric/symbols to half-width)
     if note:
         note = unicodedata.normalize('NFKC', note)
