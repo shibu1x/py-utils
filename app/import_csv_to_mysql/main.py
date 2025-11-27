@@ -198,7 +198,7 @@ def main():
 
     # CSV files directory (relative path from main.py)
     script_dir = Path(__file__).parent
-    csv_directory = script_dir / 'csv_data'
+    csv_directory = script_dir / 'data'
 
     # Service type ('vpass' or 'enavi')
     service = 'vpass'
