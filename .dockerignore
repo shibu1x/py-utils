@@ -1,14 +1,4 @@
-# Ignore everything by default
-*
-
-# Allow Python files
-!**/*.py
-
-# Allow requirements.txt
-!requirements.txt
-
-# Allow entrypoint.sh
-!entrypoint.sh
-
-# Allow .gitkeep files
-!**/.gitkeep
+**/*.pyc
+**/*.csv
+**/*.sql
+**/*.mp3

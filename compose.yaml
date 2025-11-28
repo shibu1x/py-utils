@@ -10,7 +10,17 @@ services:
       - DB_NAME
       - S3_BUCKET
       - S3_PREFIX
+      - CHROMECAST_NAME
+      - CHROMECAST_HOST
+      - SERVER_URL
     volumes:
-      - .:/app:delegated
+      - ./app:/app:delegated
       - ~/.aws:/root/.aws:delegated
-      # - ./import_csv_to_mysql/csv_dat:./import_csv_to_mysql/csv_data:delegated
+
+  # HTTP Server (for Audio File Distribution)
+  httpd:
+    image: nginx:alpine
+    ports:
+      - "8050:80"
+    volumes:
+      - ./app/say_chromecast/data:/usr/share/nginx/html:ro
