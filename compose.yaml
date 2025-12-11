@@ -13,6 +13,9 @@ services:
       - CHROMECAST_NAME
       - CHROMECAST_HOST
       - SERVER_URL
+      - WEBHOOK_URL
+      - QUIET_START_HOUR=23
+      - QUIET_END_HOUR=7
     volumes:
       - ./app:/app:delegated
       - ~/.aws:/root/.aws:delegated

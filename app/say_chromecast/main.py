@@ -9,8 +9,62 @@ import os
 import hashlib
 import argparse
 from pathlib import Path
+from datetime import datetime
 import pychromecast
 from gtts import gTTS
+import requests
+
+
+def is_quiet_hours(start_hour=None, end_hour=None):
+    """
+    Check if current time is within quiet hours.
+
+    Args:
+        start_hour: Quiet hours start (0-23)
+        end_hour: Quiet hours end (0-23)
+
+    Returns:
+        bool: True if within quiet hours, False otherwise
+    """
+    if start_hour is None or end_hour is None:
+        return False
+
+    current_hour = datetime.now().hour
+
+    # Cross midnight (e.g., 23:00-07:00)
+    if start_hour > end_hour:
+        return current_hour >= start_hour or current_hour < end_hour
+    # Same day (e.g., 13:00-14:00)
+    else:
+        return start_hour <= current_hour < end_hour
+
+
+def send_discord_notification(webhook_url, text):
+    """
+    Send notification to Discord via webhook.
+
+    Args:
+        webhook_url: Discord webhook URL
+        text: Message text to send
+
+    Returns:
+        bool: True on success, False on failure
+    """
+    try:
+        payload = {"content": text}
+        response = requests.post(webhook_url, json=payload, timeout=10)
+
+        if response.status_code == 204:
+            print(f"✓ Discord notification sent")
+            return True
+        else:
+            print(f"✗ Discord notification failed: HTTP {response.status_code}")
+            print(f"  Response: {response.text}")
+            return False
+
+    except Exception as e:
+        print(f"✗ Discord notification error: {e}")
+        return False
 
 
 class SimpleTTSCaster:
@@ -152,22 +206,85 @@ def main():
 Required environment variables:
   CHROMECAST_NAME, CHROMECAST_HOST, SERVER_URL
 
+Optional environment variables:
+  QUIET_START_HOUR: Start hour for quiet period (0-23)
+  QUIET_END_HOUR: End hour for quiet period (0-23)
+  WEBHOOK_URL: Discord webhook URL (required when using --discord)
+
 Example:
   export CHROMECAST_NAME="Room speaker"
   export CHROMECAST_HOST=192.168.0.2
   export SERVER_URL=http://192.168.0.3:8080
+  export QUIET_START_HOUR=23
+  export QUIET_END_HOUR=7
+  export WEBHOOK_URL=https://discord.com/api/webhooks/...
   python tts_cast.py "Hello, world"
+  python tts_cast.py --discord "Hello, world"
         """
     )
 
     parser.add_argument('text', help='Text to speak')
     parser.add_argument('--lang', '-l', default='ja', help='Language code (default: ja)')
+    parser.add_argument('--discord', '-d', action='store_true', help='Send notification to Discord')
 
     args = parser.parse_args()
 
     chromecast_name = os.environ.get('CHROMECAST_NAME')
     chromecast_host = os.environ.get('CHROMECAST_HOST')
     server_url = os.environ.get('SERVER_URL')
+    webhook_url = os.environ.get('WEBHOOK_URL')
+
+    # Quiet hours configuration
+    quiet_start = os.environ.get('QUIET_START_HOUR')
+    quiet_end = os.environ.get('QUIET_END_HOUR')
+
+    quiet_start_hour = None
+    quiet_end_hour = None
+
+    if quiet_start:
+        try:
+            quiet_start_hour = int(quiet_start)
+            if not 0 <= quiet_start_hour <= 23:
+                print(f"Warning: QUIET_START_HOUR must be 0-23, got {quiet_start_hour}")
+                quiet_start_hour = None
+        except ValueError:
+            print(f"Warning: QUIET_START_HOUR must be an integer, got {quiet_start}")
+
+    if quiet_end:
+        try:
+            quiet_end_hour = int(quiet_end)
+            if not 0 <= quiet_end_hour <= 23:
+                print(f"Warning: QUIET_END_HOUR must be 0-23, got {quiet_end_hour}")
+                quiet_end_hour = None
+        except ValueError:
+            print(f"Warning: QUIET_END_HOUR must be an integer, got {quiet_end}")
+
+    # Check if Discord webhook URL is provided when --discord option is used
+    if args.discord and not webhook_url:
+        print("Error: WEBHOOK_URL environment variable not set")
+        print("Please set WEBHOOK_URL when using --discord option")
+        print("\nExample:")
+        print('  export WEBHOOK_URL=https://discord.com/api/webhooks/...')
+        return 1
+
+    # Send Discord notification first (ignores quiet hours)
+    if args.discord:
+        print("=" * 60)
+        print(f"Sending Discord notification: {args.text}")
+        print("=" * 60)
+        print()
+
+        if not send_discord_notification(webhook_url, args.text):
+            print("Warning: Discord notification failed")
+
+        print()
+
+    # Check if current time is within quiet hours (only for Chromecast)
+    if is_quiet_hours(quiet_start_hour, quiet_end_hour):
+        current_time = datetime.now().strftime('%H:%M')
+        print(f"Quiet hours: Chromecast notifications are disabled ({quiet_start_hour}:00-{quiet_end_hour}:00)")
+        print(f"Current time: {current_time}")
+        return 0
 
     missing_vars = []
     if not chromecast_name:
@@ -203,6 +320,8 @@ Example:
     print(f"  Language: {args.lang}")
     print(f"  Chromecast name: {caster.chromecast_name}")
     print(f"  Chromecast host: {caster.chromecast_host}")
+    if quiet_start_hour is not None and quiet_end_hour is not None:
+        print(f"  Quiet hours: {quiet_start_hour}:00-{quiet_end_hour}:00")
     print(f"  Audio file: {audio_file_path}")
     print(f"  Audio URL: {audio_url}")
     print("=" * 60)
