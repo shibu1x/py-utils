@@ -4,16 +4,7 @@ Python utilities for file processing, MySQL database operations, and AWS S3 inte
 
 ## Features
 
-### 1. ZIP to CBZ Converter (`zip_to_cbz`)
-
-Convert ZIP archives to CBZ (comic book) format with sequential image numbering.
-
-- Extracts images from ZIP files
-- Renames images to sequential 3-digit numbers (001.jpg, 002.jpg, etc.)
-- Supports multiple image formats (jpg, png, gif, bmp, webp)
-- Automatic cleanup of temporary files
-
-### 2. CSV to MySQL Importer (`import_csv_to_mysql`)
+### 1. CSV to MySQL Importer (`import_csv_to_mysql`)
 
 Import credit card transaction CSV files into MySQL database.
 
@@ -22,7 +13,7 @@ Import credit card transaction CSV files into MySQL database.
 - Text normalization (NFKC)
 - Supports multiple credit card services (vpass, enavi)
 
-### 3. MySQL Backup to S3 (`mysql_backup_to_s3`)
+### 2. MySQL Backup to S3 (`mysql_backup_to_s3`)
 
 Automated MySQL database backup with S3 storage.
 
@@ -62,15 +53,6 @@ docker compose build
 ```
 
 ## Usage
-
-### ZIP to CBZ Conversion
-
-1. Place your ZIP files in `zip_to_cbz/data/src/`
-2. Run the conversion script:
-```bash
-docker compose run --rm py-utils zip_to_cbz/main.py
-```
-3. Converted CBZ files will be in `zip_to_cbz/data/dest/`
 
 ### CSV Import
 

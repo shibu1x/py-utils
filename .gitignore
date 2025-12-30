@@ -1,7 +1,5 @@
 .env
 
 *.csv
-*.zip
-*.cbz
 *.mp3
 .DS_Store
