@@ -4,12 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Python utilities collection for file processing, MySQL database operations, AWS S3 integration, and Chromecast TTS. Four standalone utilities located in the `app/` directory:
+Python utilities collection for file processing, MySQL database operations, AWS S3 integration, and Chromecast TTS. Three standalone utilities located in the `app/` directory:
 
-1. **zip_to_cbz**: Converts ZIP archives to CBZ (comic book) format with sequential image numbering
-2. **import_csv_to_mysql**: Imports credit card transaction CSV files (Shift-JIS encoded) into MySQL `credit_histories` table
-3. **export_mysql_to_s3**: Creates MySQL database backups, compresses them, and uploads to AWS S3
-4. **say_chromecast**: Generates TTS audio files and plays them on Google Nest Mini via Chromecast
+1. **import_csv_to_mysql**: Imports credit card transaction CSV files (Shift-JIS encoded) into MySQL `credit_histories` table
+2. **export_mysql_to_s3**: Creates MySQL database backups, compresses them, and uploads to AWS S3
+3. **say_chromecast**: Generates TTS audio files and plays them on Google Nest Mini via Chromecast
 
 ## Architecture
 
@@ -26,17 +25,6 @@ The `credit_histories` table (see `app/import_csv_to_mysql/output_table.sql`):
 - Columns: `id`, `used_at`, `store`, `price`, `payment`, `note`, `service` (vpass/enavi), `file`, `created_at`, `updated_at`
 - Primary key: `id` (bigint unsigned auto-increment)
 - No explicit unique constraint in schema, but duplicate prevention is handled in application logic by checking `(service, file)` combination
-
-### ZIP to CBZ Conversion Flow
-
-1. Reads ZIP files from `app/zip_to_cbz/data/src/`
-2. Extracts to temporary directory (`app/zip_to_cbz/data/temp/`)
-3. Recursively finds all images and renames to sequential 3-digit numbers (001.jpg, 002.jpg, etc.)
-4. Creates CBZ file (ZIP with .cbz extension) in `app/zip_to_cbz/data/dest/`
-5. CBZ filename: Uses the name of the directory containing the images (not the ZIP filename)
-6. Cleans up temp directory completely at start and end of processing
-
-**Important**: The temp directory (`app/zip_to_cbz/data/temp/`) is deleted both before and after processing to ensure clean state.
 
 ### CSV Import Flow
 
@@ -87,7 +75,6 @@ docker compose run --rm py-utils
 docker compose run --rm dev
 
 # Run utilities (entrypoint automatically passes to python)
-docker compose run --rm py-utils zip_to_cbz/main.py
 docker compose run --rm py-utils import_csv_to_mysql/main.py
 docker compose run --rm py-utils export_mysql_to_s3/main.py
 docker compose run --rm py-utils say_chromecast/main.py "テキストメッセージ"
@@ -142,15 +129,6 @@ The `.github/workflows/docker-build-push.yml` workflow:
 - Uses GitHub Actions cache for faster builds
 
 ## Key Implementation Details
-
-### ZIP to CBZ Conversion
-
-- Supported image formats: jpg, jpeg, png, gif, bmp, webp (case-insensitive)
-- Uses recursive search (`rglob`) to find images in subdirectories
-- Numbering format: 3-digit zero-padded (001, 002, 003, etc.)
-- CBZ naming: Uses `image_dir.name` (directory containing the first image found)
-- Creates intermediate `{zip_stem}_numbered` directory for renamed files
-- Both extracted directory and numbered directory are cleaned up after processing
 
 ### CSV Import
 
